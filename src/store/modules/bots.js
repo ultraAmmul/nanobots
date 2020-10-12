@@ -1,40 +1,24 @@
 import _ from "lodash";
-import store from "@/store/store";
+// import store from "@/store/store";
 
 export default {
     state: {
         bots: [],
+        botHexLimit: 3,
         blueprint: {
             id: null,
             location: null
         }
     },
     mutations: {
-        grow (state) {
-            let originalBotCount = state.bots.length;
-            let current = 0;
-            for(let bot of state.bots){
-                if(current >= originalBotCount){
-                    return;
-                }
-                let hex = store.getters.hex({id: bot.location});
-                let duplicationCost = store.getters.duplicationCost;
-                if(hex.resources < duplicationCost){
-                    return;
-                }
-                store.dispatch('spawn', bot.location);
-                hex.resources -= duplicationCost;
-                current++;
-            }
+        travel (state, payload){
+            console.log("travel", payload);
         },
-        travel (state, from, to){
-            console.log("travel", from, to);
-        },
-        spawn (state, location) {
+        spawn (state, payload) {
             return new Promise((resolve) => {
                 let bot = _.clone(state.blueprint);
                 bot.id = state.bots.length;
-                bot.location = location;
+                bot.location = payload.location;
                 state.bots.push(bot);
                 resolve(bot);
             })
@@ -44,15 +28,12 @@ export default {
         }
     },
     actions: {
-        grow (context) {
-            context.commit('grow');
+        travel (context, payload) {
+            context.commit('travel', payload);
         },
-        travel (context, from, to) {
-            context.commit('grow', from, to);
-        },
-        spawn (context, location) {
+        spawn (context, payload) {
             return new Promise((resolve) => {
-                context.commit('spawn', location);
+                context.commit('spawn', payload);
                 resolve();
             })
         },
@@ -66,6 +47,11 @@ export default {
         },
         bots (context) {
             return context.bots;
+        },
+        botsOnHex: (context) => (hexId) => {
+            return context.bots.filter((b)=>{
+                return b.location === hexId;
+            })
         }
     }
 }

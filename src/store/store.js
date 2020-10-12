@@ -7,6 +7,9 @@ import log from "./modules/log";
 import strategy from "./modules/strategy";
 import board from "./modules/board";
 import rules from "./modules/rules";
+import hand from "./modules/hand";
+import cards from "./modules/cards";
+import resources from "./modules/resources";
 
 Vue.use(Vuex);
 
@@ -18,5 +21,8 @@ export default new Vuex.Store({
         board,
         rules,
         bots,
+        hand,
+        cards,
+        resources
     },
 })

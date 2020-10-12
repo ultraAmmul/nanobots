@@ -9,10 +9,12 @@ export default {
         blueprints: {
             hex: {
                 id: null,
-                bots: [],
+                // bots: [],
                 name: 'unset',
                 resources: 0,
-                maxResources: 0
+                maxResources: 0,
+                selected: false,
+                played: false
             }
         },
         botCount: 0,
@@ -28,7 +30,6 @@ export default {
             "Sculptor",
             "Ursa Major",
             "Circinus",
-            "Coma Benerices",
             "Sculptor",
             "Sextans",
             "Canes Venatici",
@@ -38,23 +39,12 @@ export default {
             "Dorado/Mensa",
             "Volans",
             "Pegasus",
-            "Coma Berenices",
-            "Ursa Major",
-            "Sculptor",
-            "Coma Berenices",
             "Tucana",
-            "Ursa Major",
             "Sagittarius (centre)",
-            "Coma Berenices",
             "Cetus",
-            "Ursa Major",
-            "Sculptor",
-            "Virgo",
             "Hydra",
-            "Canes Venatici",
             "Draco",
             "Triangulum",
-            "Canes Venatici",
         ]
     }),
     mutations: {
@@ -74,7 +64,7 @@ export default {
                     let shuffled = _.shuffle(state.galaxyNameCurrent);
                     hex.name = shuffled.pop();
                     hex.id = state.hexCount;
-                    hex.resources = _.random(store.getters.constants.minResourcesPerGalaxy, store.getters.constants.maxResourcesPerGalaxy);
+                    hex.resources = store.getters.constants.resourcesPerGalaxy;
                     hex.maxResources = store.getters.constants.maxResourcesPerGalaxy;
                     row.push(hex);
                     state.hexCount++;
@@ -89,23 +79,61 @@ export default {
         seed () {
             let seeded = _.random(0, 13);
             // let seeded = 0;
-            store.dispatch('spawn', seeded);
+            store.dispatch('spawn', {location: seeded});
             let seededHex = store.getters.hex({id: seeded});
             store.dispatch('info', "seeding hex: " + seededHex.id);
+        },
+        openHex (state, payload) {
+            for(let row of state.board){
+                for(let hex of row){
+                    if(payload.id !== hex.id){
+                        hex.selected = false;
+                    }else{
+                        hex.selected = true;
+                    }
+                }
+            }
+        },
+        playOn (state, payload) {
+            for(let row of state.board){
+                for(let hex of row){
+                    if(payload.location === hex.id){
+                        hex.played = true;
+                    }
+                }
+            }
+        },
+        resetPlayedHexes(state) {
+            for(let row of state.board){
+                for(let hex of row){
+                    hex.played = false;
+                }
+            }
         }
     },
     actions: {
-        resetAll (context) {
+        resetBoard (context) {
             context.commit('resetBoard');
             context.commit('resetBots');
             context.commit('create');
             context.commit('seed');
-            context.dispatch('setStrategy', {id: 0}); // 0 = grow
         },
+        openHex (context, payload) {
+            context.commit('openHex', payload);
+        },
+        playOn (context, payload) {
+            context.commit('playOn', payload);
+        },
+        resetPlayedHexes (context) {
+            context.commit('resetPlayedHexes');
+        }
     },
     getters: {
         board (state) {
             return state.board;
+        },
+        hexList (state) {
+            return _.flatten(state.board);
         },
         hex: (state) => (hex) => {
             for(let row of state.board){
@@ -117,6 +145,19 @@ export default {
             }
             store.dispatch('error', 'could not resolve hex: ' + hex.id);
             return null;
+        },
+        playableHexes () {
+            let infestedHexes = store.getters.hexList.filter((h) => {
+                let bots = store.getters.botsOnHex(h.id);
+                let infested = bots.length;
+                return infested > 0;
+            });
+
+            let playedHexes = store.getters.hexList.filter((h) => {
+                return h.played === true;
+            });
+
+            return infestedHexes.length - playedHexes.length;
         }
     }
 }

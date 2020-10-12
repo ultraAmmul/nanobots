@@ -43,6 +43,10 @@ export default {
         color: red;
     }
 
+    .logstream-player{
+        color: blue;
+    }
+
     #logstream{
         max-height: 490px;
         height: 100%;

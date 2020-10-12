@@ -1,58 +1,51 @@
 <template>
     <div class="wrapper">
-        <v-tooltip top class="text-center d-flex align-center justify-space-around hex">
-            <template v-slot:activator="{ on, attrs }">
+        <v-speed-dial>
+            <template v-slot:activator>
                 <div
+                    v-on:click="openHexMenu"
                     class="hexagon"
-                    v-bind="attrs"
-                    v-on="on"
+                    v-bind:class="{ 'hexagon-selected': storeHex.selected}"
                 >
                     <div
                         :class="infested ? 'infested' : '' + ' infestation'"
                     >
+                        <v-row align="center">
+                            <v-icon
+                                small
+                                class="hex-icon"
+                            >mdi-robot</v-icon>
+                            <div> {{ bots.length}}</div>
+                        </v-row><v-row align="center">
                         <v-icon
-                            large
-                            color="green darken-2"
-                            :v-show="infested"
-                        >
-                            mdi-bug
-                        </v-icon>
+                            small
+                            class="hex-icon"
+                        >mdi-terrain</v-icon>
+                        <div> {{ storeHex.resources }}</div>
+                    </v-row>
+                        <v-row>
+                            <v-icon
+                                color="error"
+                                v-if="storeHex.played"
+                            >
+                                mdi-close-octagon-outline
+                            </v-icon>
+                        </v-row>
                     </div>
                 </div>
             </template>
-            <v-container>
-                <v-row>
-                    <b>{{ storeHex.name }}</b>
-                </v-row>
-                <v-row>
-                    <v-col>
-                        <v-progress-circular
-                            :rotate="360"
-                            :size="100"
-                            :width="15"
-                            :value="botsPercentual"
-                            color="teal"
-                        >
-                            {{ bots.length }}
-                        </v-progress-circular>
-                    </v-col>
-                    <v-col>
-                        <v-progress-circular
-                            :rotate="360"
-                            :size="100"
-                            :width="15"
-                            :value="resourcesPercentual"
-                            color="red"
-                        >
-                            {{ storeHex.resources }}
-                        </v-progress-circular>
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <span class="hex-footer">id: {{ hex.id }}</span>
-                </v-row>
-            </v-container>
-        </v-tooltip>
+            <v-btn
+                dark
+                class="dial-btn"
+                v-for="card in hand"
+                v-bind:key="card.id"
+                :disabled="card.played"
+                v-on:click="play(card)"
+                v-show="infested && !storeHex.played"
+            >
+                {{ card.label }}
+            </v-btn>
+        </v-speed-dial>
     </div>
 </template>
 
@@ -72,21 +65,27 @@ export default {
         infested () {
             return this.bots.length > 0;
         },
-        botsPercentual () {
-            return ((this.bots.length / this.$store.getters.constants.botsPerGalaxy) * 100).toFixed(2);
-        },
-        resourcesPercentual () {
-            return ((this.storeHex.resources / this.storeHex.maxResources) * 100).toFixed(2);
+        hand () {
+            return this.$store.getters.hand;
         }
     },
+    methods: {
+        openHexMenu(){
+            if(this.infested){
+                this.$store.dispatch('openHex', this.storeHex);
+            }
+        },
+        play(card){
+            this.$store.dispatch('play', {card: card, location: this.storeHex.id});
+            this.$store.dispatch('playOn', { location: this.storeHex.id });
+        }
+    }
 }
 </script>
 
 <style>
 
-    .wrapper{
-        /*width: 130px;*/
-    }.hexagon {
+    .hexagon {
          position: relative;
          width: 100px;
          height: 57.74px;
@@ -94,7 +93,13 @@ export default {
          margin: 28.87px 0;
          border-left: solid 5px #272727;
          border-right: solid 5px #272727;
+        cursor: pointer;
      }
+
+    .hexagon:hover,
+    .hexagon-selected {
+        background-color: #303030;
+    }
 
     .hexagon:before,
     .hexagon:after {
@@ -138,8 +143,8 @@ export default {
         width: 30px;
         z-index: 3;
         position: absolute;
-        left: 25px;
-        top: 10px;
+        left: 40px;
+        top: -10px;
     }
 
     .infestation{
@@ -151,5 +156,14 @@ export default {
         color: purple;
         font-size: 13px;
         font-weight: bold;
+    }
+    
+    .dial-btn{
+        z-index: 5;
+    }
+
+    .hex-icon{
+        margin-top: -4px;
+        margin-right: 5px;
     }
 </style>

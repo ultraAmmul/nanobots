@@ -9,7 +9,7 @@
             <v-icon
                 medium
             >mdi-av-timer</v-icon>
-            <span>Time: {{ beat }}</span>
+            <span>Round: {{ beat }}</span>
         </span>
         <span
             class="pr-5"
@@ -19,12 +19,11 @@
             >mdi-robot</v-icon>
             <span>Bots: {{ count }}</span>
         </span>
-        <span
-        >
+        <span>
             <v-icon
                 medium
-            >mdi-cog</v-icon>
-            <span>Strategy: <span style="color: white">{{ strategyName }}</span></span>
+            >mdi-terrain</v-icon>
+            <span>Resources: {{ resources }}</span>
         </span>
     </v-system-bar>
 </template>
@@ -32,7 +31,7 @@
 <script>
 export default {
     name: "StatusBar",
-    props: ["beat", "count", "strategyName"]
+    props: ["beat", "count", "resources"]
 }
 </script>
 

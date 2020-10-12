@@ -35,6 +35,13 @@ export default {
                 text: payload
             }
             context.commit('write', message)
+        },
+        player (context, payload) {
+            let message = {
+                level: 'player',
+                text: payload
+            }
+            context.commit('write', message)
         }
     },
     getters: {

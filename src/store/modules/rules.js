@@ -1,9 +1,9 @@
 export default {
     state: () => ({
         constants: {
-            botsPerGalaxy: 100,
-            minResourcesPerGalaxy: 50,
-            maxResourcesPerGalaxy: 200,
+            botsPerGalaxy: 10,
+            resourcesPerGalaxy: 10,
+            maxResourcesPerGalaxy: 10,
         },
         rules: {
             'duplicationCost': {

@@ -30,7 +30,7 @@
                     <StatusBar
                         :count="count"
                         :beat="beat"
-                        :strategy-name="strategyName"
+                        :resources="resources"
                     ></StatusBar>
                 </v-card-text>
             </v-card>
@@ -43,27 +43,25 @@
                 class="mt-5"
                 style="background-color: #363636; width: 100%;"
             >
-                <v-card-title>
-                    Controls & Settings
-                </v-card-title>
                 <v-card-text>
-                    <v-row>
-                        <v-col>
-                            <Rules></Rules>
-                        </v-col>
-                    </v-row>
-                    <v-divider></v-divider>
                     <v-row
                         align="center"
                         justify="end"
                         class="pb-5 pt-5"
                     >
                         <v-btn
+                            disabled
+                            class="ml-3"
+                        >
+                            Actions remaining : {{ plays }}
+                        </v-btn>
+                        <v-spacer></v-spacer>
+                        <v-btn
                             v-on:click="createUniverse"
                             class="mr-3 ml-3"
-                            :disabled="created"
                         >
-                            Create Space
+                            <span v-if="state === 0">Start Game</span>
+                            <span v-if="state === 1">Restart Game</span>
                             <v-icon
                                 dark
                                 right
@@ -73,11 +71,11 @@
                             </v-icon>
                         </v-btn>
                         <v-btn
-                            v-on:click="start"
+                            v-on:click="finishTurn"
                             class="mr-3 ml-3"
-                            :disabled="!created"
+                            :disabled="!created || (plays > 0 && playsHexes > 0)"
                         >
-                            Start Time
+                            Finish Turn {{ playsHexes }}
                             <v-icon
                                 dark
                                 right
@@ -86,45 +84,18 @@
                                 mdi-play-circle
                             </v-icon>
                         </v-btn>
-                        <v-btn
-                            v-on:click="stop"
-                            class="mr-3 ml-3"
-                            :disabled="!created"
-                        >
-                            Stop Time
-                            <v-icon
-                                dark
-                                right
-                                color="warning"
-                            >
-                                mdi-pause-circle
-                            </v-icon>
-                        </v-btn>
-                        <v-btn
-                            v-on:click="reset"
-                            class="mr-3 ml-3"
-                            :disabled="!created"
-                        >
-                            Reset Space & Time
-                            <v-icon
-                                dark
-                                right
-                                color="error"
-                            >
-                                mdi-delete-forever
-                            </v-icon>
-                        </v-btn>
                     </v-row>
                     <v-divider></v-divider>
                     <v-row class="pt-5 pb-0">
                         <v-col
-                            v-for="strategy in strategies"
-                            v-bind:key="strategy.id"
+                            v-for="card in hand"
+                            v-bind:key="card.id"
                             class="pt-0 pb-0"
+                            cols="3"
                         >
-                            <Strategy
-                                :strategy="strategy">
-                            </Strategy>
+                            <Card
+                                :card="card">
+                            </Card>
                         </v-col>
                     </v-row>
 
@@ -137,65 +108,58 @@
 
 <script>
 import LogStream from "@/components/LogStream";
-import Strategy from "@/components/Strategy";
+import Card from "@/components/Card";
 import StatusBar from "@/components/StatusBar";
 import Board from "@/components/Board";
-import Rules from "@/components/Rules";
 
 export default {
     name: "Simulator",
-    components: {Rules, Board, StatusBar, Strategy, LogStream},
+    components: {
+        Board,
+        StatusBar,
+        Card,
+        LogStream
+    },
     data: () => {
         return {
             state: 0,
-            created: false
+            created: false,
         }
     },
     computed: {
         beat () {
             return this.$store.getters.beat;
         },
-        strategies () {
-            return this.$store.getters.strategies;
-        },
-        currentStrategy () {
-            return this.$store.getters.currentStrategy;
-        },
-        strategyName() {
-            return this.currentStrategy ? this.currentStrategy.name : 'unset';
+        hand () {
+            return this.$store.getters.hand;
         },
         count () {
             return this.$store.getters.count;
+        },
+        resources () {
+            return this.$store.getters.resources;
+        },
+        plays () {
+            return this.hand.length - this.$store.getters.played.length ;
+        },
+        playsHexes () {
+            return this.$store.getters.playableHexes;
         }
     },
     methods: {
-        start () {
-            if(this.currentStrategy === null){
-                this.$store.dispatch('warn', 'no strategy defined');
-                return;
-            }
-            if(this.state === 1){
-                this.$store.dispatch('info', "continue time")
-            }else{
-                this.$store.dispatch('info', "start time")
-            }
-            this.state = 1;
-            this.$store.dispatch('start');
-        },
-        stop () {
-            this.$store.dispatch('info', "stop time")
-            this.$store.dispatch('stop');
-        },
-        reset () {
-            this.state = 0;
-            this.$store.dispatch('stop');
-            this.$store.dispatch('warn', "reset space & time")
-            this.$store.dispatch('resetAll');
+        finishTurn () {
+            this.$store.dispatch('finishTurn');
+            this.$store.dispatch('resetPlayed');
+            this.$store.dispatch('resetPlayedHexes');
         },
         createUniverse () {
-            this.$store.dispatch('info', "create space")
-            this.$store.dispatch('resetAll')
+            let start = this.state === 0 ? 'start' : 'restart';
+            this.$store.dispatch('info', start + " game");
+            this.$store.dispatch('resetBoard');
+            this.$store.dispatch('resetRound');
+            this.$store.dispatch('resetHand');
             this.created = true;
+            this.state = 1;
         }
     }
 }
